@@ -20,13 +20,15 @@ function App() {
   };
 
   return (
-    <div>
-      <nav>
-        <button onClick={() => setCurrentPage('home')}>Home</button>
-        <button onClick={() => setCurrentPage('scores')}>Scores</button>
-        <button onClick={() => setCurrentPage('analysis')}>Analysis</button>
+    <div className="min-h-screen bg-gray-100">
+      <nav className="flex justify-around bg-blue-500 p-4 text-white">
+        <button onClick={() => setCurrentPage('home')} className="px-4 py-2 rounded hover:bg-blue-700">Home</button>
+        <button onClick={() => setCurrentPage('scores')} className="px-4 py-2 rounded hover:bg-blue-700">Scores</button>
+        <button onClick={() => setCurrentPage('analysis')} className="px-4 py-2 rounded hover:bg-blue-700">Analysis</button>
       </nav>
-      <main>{renderPage()}</main>
+      <main className="p-6">
+        {renderPage()}
+      </main>
     </div>
   );
 }
