@@ -7,25 +7,74 @@ const Scores = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTab, setSelectedTab] = useState('upcoming'); // Default tab
+  const [selectedGame, setSelectedGame] = useState('all'); // Default filter for games
 
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const response = await axios.get('https://api.pandascore.co/matches/', {
+  // Game list with endpoints
+  const gameEndpoints = {
+    'dota-2': 'https://api.pandascore.co/dota2/matches',
+    'cs2': 'https://api.pandascore.co/csgo/matches',
+    'league-of-legends': 'https://api.pandascore.co/lol/matches',
+    'valorant': 'https://api.pandascore.co/valorant/matches',
+    'rainbow6': 'https://api.pandascore.co/r6siege/matches',
+    'rocketleague': 'https://api.pandascore.co/rl/matches',
+    'cod': 'https://api.pandascore.co/codmw/matches'
+  };
+
+  // Function to fetch matches based on the selected tab and game
+  const fetchMatches = async (tab) => {
+    setLoading(true);
+    setError(null);
+    try {
+      let url = '';
+      if (selectedGame === 'all') {
+        // If 'all' is selected, fetch from each endpoint
+        const allMatches = [];
+        for (const key in gameEndpoints) {
+          const response = await axios.get(`${gameEndpoints[key]}/${tab}`, {
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_PANDASCORE_API_KEY}`,
+            },
+          });
+          allMatches.push(...response.data);
+        }
+        setMatches(allMatches);
+      } else {
+        url = `${gameEndpoints[selectedGame]}/${tab}`;
+        const response = await axios.get(url, {
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_PANDASCORE_API_KEY}`, // Access environment variable for Vite
+            'Authorization': `Bearer ${import.meta.env.VITE_PANDASCORE_API_KEY}`,
           },
         });
         setMatches(response.data);
-      } catch (err) {
-        setError(err.message || 'An error occurred');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchMatches();
-  }, []);
+  // Fetch matches whenever the selected tab or game changes
+  useEffect(() => {
+    fetchMatches(selectedTab);
+  }, [selectedTab, selectedGame]);
+
+  // Filter matches based on selected game
+  const filteredMatches = matches.filter((match) => {
+    if (selectedGame === 'all') return true;
+    const gameName = match.videogame?.name || match.videogame_title;
+    const gameMap = {
+      'Dota 2': 'dota-2',
+      'Counter-Strike 2': 'cs2',
+      'League of Legends': 'league-of-legends',
+      'Valorant': 'valorant',
+      'Rainbow Six': 'rainbow6',
+      'Rocket League': 'rocketleague',
+      'Call of Duty': 'cod'
+    };
+    return gameMap[gameName] === selectedGame;
+  });
 
   if (loading) {
     return (
@@ -45,12 +94,54 @@ const Scores = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-3xl font-bold text-gray-900 mb-6">Upcoming Matches</h2>
-      {matches.length === 0 ? (
-        <p className="text-lg text-gray-700">No matches available at the moment.</p>
+      <h2 className="text-3xl font-bold text-gray-900 mb-6">Matches</h2>
+
+      {/* Tabs */}
+      <div className="mb-4 flex space-x-4">
+        <button
+          className={`px-4 py-2 rounded-lg ${selectedTab === 'upcoming' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}
+          onClick={() => setSelectedTab('upcoming')}
+        >
+          Upcoming
+        </button>
+        <button
+          className={`px-4 py-2 rounded-lg ${selectedTab === 'running' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}
+          onClick={() => setSelectedTab('running')}
+        >
+          Live
+        </button>
+        <button
+          className={`px-4 py-2 rounded-lg ${selectedTab === 'past' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}
+          onClick={() => setSelectedTab('past')}
+        >
+          Past
+        </button>
+      </div>
+
+      {/* Game Filter */}
+      <div className="mb-4">
+        <label htmlFor="game-select" className="block text-gray-700 font-medium mb-2">Filter by Game:</label>
+        <select
+          id="game-select"
+          value={selectedGame}
+          onChange={(e) => setSelectedGame(e.target.value)}
+          className="p-2 border border-gray-300 rounded-lg"
+        >
+          <option value="all">All Games</option>
+          {Object.entries(gameEndpoints).map(([id, endpoint]) => (
+            <option key={id} value={id}>
+              {id.replace('-', ' ').toUpperCase()}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Match List */}
+      {filteredMatches.length === 0 ? (
+        <p className="text-lg text-gray-700">No matches available for the selected criteria.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {matches.map((match) => (
+          {filteredMatches.map((match) => (
             <div key={match.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
                 {match.name}
@@ -64,7 +155,7 @@ const Scores = () => {
               <p className="text-lg text-gray-600">
                 League: {match.league.name}
               </p>
-              {match.streams_list.length > 0 && (
+              {match.streams_list?.length > 0 && (
                 <div className="mt-4">
                   <h4 className="text-lg font-medium text-gray-800">Streams:</h4>
                   <ul>
