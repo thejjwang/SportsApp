@@ -1,5 +1,3 @@
-// src/pages/Scores.jsx
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -21,14 +19,12 @@ const Scores = () => {
     'cod': 'https://api.pandascore.co/codmw/matches'
   };
 
-  // Function to fetch matches based on the selected tab and game
   const fetchMatches = async (tab) => {
     setLoading(true);
     setError(null);
     try {
       let url = '';
       if (selectedGame === 'all') {
-        // If 'all' is selected, fetch from each endpoint
         const allMatches = [];
         for (const key in gameEndpoints) {
           const response = await axios.get(`${gameEndpoints[key]}/${tab}`, {
@@ -55,12 +51,10 @@ const Scores = () => {
     }
   };
 
-  // Fetch matches whenever the selected tab or game changes
   useEffect(() => {
     fetchMatches(selectedTab);
   }, [selectedTab, selectedGame]);
 
-  // Filter matches based on selected game
   const filteredMatches = matches.filter((match) => {
     if (selectedGame === 'all') return true;
     const gameName = match.videogame?.name || match.videogame_title;
@@ -155,6 +149,18 @@ const Scores = () => {
               <p className="text-lg text-gray-600">
                 League: {match.league.name}
               </p>
+              <div className="mt-4 flex space-x-4">
+                {match.opponents.map((opponent, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <img
+                      src={opponent.opponent.image_url}
+                      alt={opponent.opponent.name}
+                      className="w-12 h-12 object-cover rounded-full"
+                    />
+                    <span className="text-gray-800 font-medium">{opponent.opponent.name}</span>
+                  </div>
+                ))}
+              </div>
               {match.streams_list?.length > 0 && (
                 <div className="mt-4">
                   <h4 className="text-lg font-medium text-gray-800">Streams:</h4>
