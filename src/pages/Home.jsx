@@ -2,7 +2,7 @@ import React from 'react';
 
 const Home = ({ onNavigate }) => {
   return (
-    <div className="min-h-screen bg-black text-yellow-500 flex flex-col items-center justify-center relative">
+    <div className="min-h-screen bg-grainy-dark text-yellow-500 flex flex-col items-center justify-center relative">
       {/* Navbar */}
       <nav className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center text-sm">
         <div className="text-yellow-500 font-bold">
